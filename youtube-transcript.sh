@@ -47,12 +47,15 @@ extract_video_id() {
   local vid
 
   # youtu.be/ID
-  if vid=$(echo "$input" | grep -oP '(?<=youtu\.be/)[A-Za-z0-9_-]{11}'); then
-    echo "$vid"; return
+  if [[ "$input" =~ youtu\.be/([A-Za-z0-9_-]{11}) ]]; then
+    echo "${BASH_REMATCH[1]}"; return
   fi
   # watch?v=ID or /v/ID or /embed/ID or /shorts/ID
-  if vid=$(echo "$input" | grep -oP '(?<=[?&]v=|/v/|/embed/|/shorts/)[A-Za-z0-9_-]{11}'); then
-    echo "$vid"; return
+  if [[ "$input" =~ [?\&]v=([A-Za-z0-9_-]{11}) ]] || \
+     [[ "$input" =~ /v/([A-Za-z0-9_-]{11}) ]] || \
+     [[ "$input" =~ /embed/([A-Za-z0-9_-]{11}) ]] || \
+     [[ "$input" =~ /shorts/([A-Za-z0-9_-]{11}) ]]; then
+    echo "${BASH_REMATCH[1]}"; return
   fi
   # bare 11-char ID
   if [[ "$input" =~ ^[A-Za-z0-9_-]{11}$ ]]; then
@@ -135,7 +138,7 @@ cmd_transcript() {
     -- "$video_id" 2>&1 >/dev/null); then
     # Extract the useful part of the error
     local err_msg
-    err_msg=$(echo "$ytdlp_err" | grep -oP '(?<=ERROR: ).*' | head -1)
+    err_msg=$(echo "$ytdlp_err" | sed -n 's/.*ERROR: //p' | head -1)
     json_err "yt-dlp failed: ${err_msg:-failed to fetch subtitles for $video_id}"
   fi
 
